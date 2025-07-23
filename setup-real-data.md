@@ -38,7 +38,7 @@ MONGODB_URI=mongodb://localhost:27017/worldquestion
 
 # Security
 JWT_SECRET=worldquestion-dev-secret-key
-CORS_ORIGIN=http://localhost:3030
+CORS_ORIGIN=http://localhost:3040
 
 # Rate Limiting
 RATE_LIMIT_WINDOW_MS=900000

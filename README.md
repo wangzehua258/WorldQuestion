@@ -98,13 +98,13 @@ mongod
 ### 3. Environment Configuration
 ```bash
 # Frontend (.env.local)
-NEXT_PUBLIC_API_URL=http://localhost:5000/api
+NEXT_PUBLIC_API_URL=http://localhost:5001/api
 
 # Backend (backend/.env)
 PORT=5000
 NODE_ENV=development
 MONGODB_URI=mongodb://localhost:27017/worldquestion
-CORS_ORIGIN=http://localhost:3030
+CORS_ORIGIN=http://localhost:3040
 ```
 
 ### 4. Database Seeding
@@ -234,7 +234,7 @@ MONGODB_URI=mongodb://localhost:27017/worldquestion
 
 # Security
 JWT_SECRET=your-super-secret-jwt-key
-CORS_ORIGIN=http://localhost:3030
+CORS_ORIGIN=http://localhost:3040
 
 # Rate Limiting
 RATE_LIMIT_WINDOW_MS=900000
