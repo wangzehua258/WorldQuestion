@@ -2,39 +2,54 @@ const mongoose = require('mongoose');
 
 const voteSchema = new mongoose.Schema({
   questionId: {
-    type: String,
-    required: true,
-    ref: 'Question'
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Question',
+    required: true
   },
-  vote: {
+  choice: {
     type: String,
     enum: ['yes', 'no'],
     required: true
   },
-  userId: {
+  userIp: {
     type: String,
-    required: false // Anonymous voting allowed
+    required: true
   },
   userAgent: {
     type: String,
-    required: false
-  },
-  ipAddress: {
-    type: String,
-    required: false
+    default: ''
   },
   timestamp: {
     type: Date,
     default: Date.now
-  },
-  sessionId: {
-    type: String,
-    required: false
   }
+}, {
+  timestamps: true
 });
 
-// Compound index to prevent duplicate votes from same user/session
-voteSchema.index({ questionId: 1, userId: 1 }, { sparse: true });
-voteSchema.index({ questionId: 1, sessionId: 1 }, { sparse: true });
+// Compound index to prevent duplicate votes from same IP
+voteSchema.index({ questionId: 1, userIp: 1 }, { unique: true });
+
+// Index for efficient queries
+voteSchema.index({ questionId: 1, timestamp: -1 });
+voteSchema.index({ timestamp: -1 });
+
+// Static method to get vote statistics for a question
+voteSchema.statics.getVoteStats = function(questionId) {
+  return this.aggregate([
+    { $match: { questionId: new mongoose.Types.ObjectId(questionId) } },
+    {
+      $group: {
+        _id: '$choice',
+        count: { $sum: 1 }
+      }
+    }
+  ]);
+};
+
+// Static method to check if user has voted
+voteSchema.statics.hasUserVoted = function(questionId, userIp) {
+  return this.findOne({ questionId, userIp }).select('choice');
+};
 
 module.exports = mongoose.model('Vote', voteSchema); 

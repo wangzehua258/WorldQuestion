@@ -1,180 +1,306 @@
 const express = require('express');
-const router = express.Router();
+const { body, validationResult } = require('express-validator');
 const Question = require('../models/Question');
 const Vote = require('../models/Vote');
-const Joi = require('joi');
+const Comment = require('../models/Comment');
 
-// Validation schemas
-const voteSchema = Joi.object({
-  vote: Joi.string().valid('yes', 'no').required(),
-  sessionId: Joi.string().optional()
-});
+const router = express.Router();
 
-const commentSchema = Joi.object({
-  text: Joi.string().max(500).required(),
-  isAnonymous: Joi.boolean().default(true)
-});
-
-// Get current question
+// Get current active question
 router.get('/current', async (req, res) => {
   try {
-    const currentQuestion = await Question.findOne({ isActive: true })
-      .sort({ date: -1 })
-      .limit(1);
-    
-    if (!currentQuestion) {
-      return res.status(404).json({ message: 'No active question found' });
-    }
-    
-    res.json(currentQuestion);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-// Get all questions (for history)
-router.get('/', async (req, res) => {
-  try {
-    const { page = 1, limit = 10, category } = req.query;
-    
-    const query = {};
-    if (category) {
-      query.category = category;
-    }
-    
-    const questions = await Question.find(query)
-      .sort({ date: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .exec();
-    
-    const total = await Question.countDocuments(query);
-    
-    res.json({
-      questions,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
-      total
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-// Get question by ID
-router.get('/:id', async (req, res) => {
-  try {
-    const question = await Question.findOne({ id: req.params.id });
+    const question = await Question.getCurrentQuestion();
     
     if (!question) {
-      return res.status(404).json({ message: 'Question not found' });
+      return res.status(404).json({
+        success: false,
+        message: 'No active question found'
+      });
     }
-    
-    res.json(question);
+
+    // Get comments for the question
+    const comments = await Comment.getPinnedComments(question._id, 5);
+
+    const questionData = {
+      ...question.toJSON(),
+      comments: comments
+    };
+
+    res.json({
+      success: true,
+      data: questionData
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Error fetching current question:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Get historical questions
+router.get('/history', async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const skip = (page - 1) * limit;
+
+    const questions = await Question.find({ isActive: false })
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await Question.countDocuments({ isActive: false });
+
+    res.json({
+      success: true,
+      data: {
+        questions,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(total / limit),
+          total,
+          hasNext: skip + questions.length < total,
+          hasPrev: page > 1
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching historical questions:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Get question by ID with votes and comments
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const question = await Question.findById(id);
+    if (!question) {
+      return res.status(404).json({
+        success: false,
+        message: 'Question not found'
+      });
+    }
+
+    // Get comments for the question
+    const comments = await Comment.getPinnedComments(question._id, 10);
+
+    const questionData = {
+      ...question.toJSON(),
+      comments: comments
+    };
+
+    res.json({
+      success: true,
+      data: questionData
+    });
+  } catch (error) {
+    console.error('Error fetching question:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
   }
 });
 
 // Vote on a question
-router.post('/:id/vote', async (req, res) => {
+router.post('/:id/vote', [
+  body('choice').isIn(['yes', 'no']).withMessage('Choice must be either "yes" or "no"')
+], async (req, res) => {
   try {
-    const { error, value } = voteSchema.validate(req.body);
-    if (error) {
-      return res.status(400).json({ message: error.details[0].message });
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        errors: errors.array()
+      });
     }
-    
-    const question = await Question.findOne({ id: req.params.id });
+
+    const { id } = req.params;
+    const { choice } = req.body;
+    const userIp = req.ip || req.connection.remoteAddress;
+
+    // Check if question exists
+    const question = await Question.findById(id);
     if (!question) {
-      return res.status(404).json({ message: 'Question not found' });
+      return res.status(404).json({
+        success: false,
+        message: 'Question not found'
+      });
     }
-    
-    // Check if user already voted
-    const existingVote = await Vote.findOne({
-      questionId: req.params.id,
-      $or: [
-        { userId: req.body.userId },
-        { sessionId: req.body.sessionId }
-      ]
-    });
-    
+
+    // Check if user has already voted
+    const existingVote = await Vote.hasUserVoted(id, userIp);
     if (existingVote) {
-      return res.status(400).json({ message: 'You have already voted on this question' });
+      return res.status(400).json({
+        success: false,
+        message: 'You have already voted on this question'
+      });
     }
-    
-    // Create vote record
+
+    // Create new vote
     const vote = new Vote({
-      questionId: req.params.id,
-      vote: value.vote,
-      userId: req.body.userId,
-      sessionId: value.sessionId,
-      userAgent: req.get('User-Agent'),
-      ipAddress: req.ip
+      questionId: id,
+      choice,
+      userIp,
+      userAgent: req.get('User-Agent') || ''
     });
-    
+
     await vote.save();
-    
+
     // Update question vote counts
-    const updateField = value.vote === 'yes' ? 'yesVotes' : 'noVotes';
-    await Question.findOneAndUpdate(
-      { id: req.params.id },
-      { 
-        $inc: { 
-          [updateField]: 1,
-          totalVotes: 1
-        }
-      }
-    );
-    
-    // Return updated question
-    const updatedQuestion = await Question.findOne({ id: req.params.id });
-    res.json(updatedQuestion);
-    
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-// Add comment to question
-router.post('/:id/comments', async (req, res) => {
-  try {
-    const { error, value } = commentSchema.validate(req.body);
-    if (error) {
-      return res.status(400).json({ message: error.details[0].message });
+    if (choice === 'yes') {
+      question.yesVotes += 1;
+    } else {
+      question.noVotes += 1;
     }
-    
-    const question = await Question.findOne({ id: req.params.id });
-    if (!question) {
-      return res.status(404).json({ message: 'Question not found' });
-    }
-    
-    const comment = {
-      id: require('uuid').v4(),
-      text: value.text,
-      isAnonymous: value.isAnonymous,
-      userId: req.body.userId,
-      timestamp: new Date()
-    };
-    
-    question.comments.push(comment);
+    question.totalVotes += 1;
     await question.save();
-    
-    res.json(comment);
+
+    res.json({
+      success: true,
+      message: 'Vote recorded successfully',
+      data: {
+        choice,
+        questionId: id
+      }
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Error recording vote:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
   }
 });
 
-// Get trending questions
-router.get('/trending/top', async (req, res) => {
+// Get vote statistics for a question
+router.get('/:id/stats', async (req, res) => {
   try {
-    const trendingQuestions = await Question.find({ isActive: true })
-      .sort({ totalVotes: -1 })
-      .limit(5);
+    const { id } = req.params;
     
-    res.json(trendingQuestions);
+    const question = await Question.findById(id);
+    if (!question) {
+      return res.status(404).json({
+        success: false,
+        message: 'Question not found'
+      });
+    }
+
+    const stats = await Vote.getVoteStats(id);
+    
+    const voteStats = {
+      totalVotes: question.totalVotes,
+      yesVotes: question.yesVotes,
+      noVotes: question.noVotes,
+      yesPercentage: question.yesPercentage,
+      noPercentage: question.noPercentage,
+      breakdown: stats
+    };
+
+    res.json({
+      success: true,
+      data: voteStats
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Error fetching vote stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Add comment to a question
+router.post('/:id/comments', [
+  body('content').isLength({ min: 1, max: 1000 }).withMessage('Comment must be between 1 and 1000 characters')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        errors: errors.array()
+      });
+    }
+
+    const { id } = req.params;
+    const { content, isAnonymous = true } = req.body;
+    const userIp = req.ip || req.connection.remoteAddress;
+
+    // Check if question exists
+    const question = await Question.findById(id);
+    if (!question) {
+      return res.status(404).json({
+        success: false,
+        message: 'Question not found'
+      });
+    }
+
+    // Create new comment
+    const comment = new Comment({
+      questionId: id,
+      content,
+      isAnonymous,
+      userIp,
+      userAgent: req.get('User-Agent') || ''
+    });
+
+    await comment.save();
+
+    res.json({
+      success: true,
+      message: 'Comment added successfully',
+      data: comment
+    });
+  } catch (error) {
+    console.error('Error adding comment:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Get comments for a question
+router.get('/:id/comments', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { limit = 10, pinned = false } = req.query;
+
+    // Check if question exists
+    const question = await Question.findById(id);
+    if (!question) {
+      return res.status(404).json({
+        success: false,
+        message: 'Question not found'
+      });
+    }
+
+    let comments;
+    if (pinned === 'true') {
+      comments = await Comment.getPinnedComments(id, parseInt(limit));
+    } else {
+      comments = await Comment.getRecentComments(id, parseInt(limit));
+    }
+
+    res.json({
+      success: true,
+      data: comments
+    });
+  } catch (error) {
+    console.error('Error fetching comments:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
   }
 });
 

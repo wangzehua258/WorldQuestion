@@ -1,170 +1,357 @@
 # WorldQuestion - Daily World Questions Platform
 
-A modern voting platform that asks one world-changing question every day. Vote, see results, share your perspective, and become part of global trend analysis.
+A stunning, modern voting platform that asks one world-changing question every day. Vote, see results, share your perspective, and become part of global trend analysis.
 
-## Product Overview
+![WorldQuestion Platform](https://img.shields.io/badge/Next.js-14.0.4-black?style=for-the-badge&logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.3.3-blue?style=for-the-badge&logo=typescript)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4.0-38B2AC?style=for-the-badge&logo=tailwind-css)
+![Express](https://img.shields.io/badge/Express-4.18.2-green?style=for-the-badge&logo=express)
+![MongoDB](https://img.shields.io/badge/MongoDB-8.0.3-green?style=for-the-badge&logo=mongodb)
+
+## 🌍 Product Overview
 
 **One-liner:** A daily world question voting platform where you can vote, see results, share your stance, and become part of global trend analysis.
 
-## Core Features
+## ✨ Core Features
 
-### 1. Daily World Questions
+### 🗳️ Daily World Questions
 - One thought-provoking question every day
 - Simple Yes/No voting mechanism
 - Real-time results and percentages
 
-### 2. Data Visualization
-- Beautiful pie charts showing vote distribution
-- Real-time vote updates
+### 📊 Beautiful Data Visualization
+- Stunning doughnut charts showing vote distribution
+- Real-time vote updates with animations
 - Total vote counts and percentages
 
-### 3. AI Trend Analysis
+### 🤖 AI Trend Analysis
 - Intelligent analysis based on voting results
 - Interpretation of current social trends
 - Deep insights and context
 
-### 4. Featured Comments
+### 💬 Featured Comments
 - Curated user comments display
 - Time-sorted featured comments
 - Expandable/collapsible comment sections
 
-### 5. Social Sharing
+### 📱 Social Sharing
 - Beautiful share card generation
 - Download share images
 - Native sharing support
 
-### 6. Historical Questions
+### 📚 Historical Questions
 - Browse past questions
 - Historical vote comparisons
 - Question popularity rankings
 
-## Technology Stack
+## 🛠️ Technology Stack
 
 ### Frontend
-- **Framework:** React 18 + TypeScript
-- **Styling:** Tailwind CSS
-- **Charts:** Recharts
+- **Framework:** Next.js 14 with App Router
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS with custom design system
+- **Charts:** Chart.js with react-chartjs-2
 - **Icons:** Lucide React
+- **Animations:** Framer Motion
 - **Date handling:** date-fns
 - **Image generation:** html2canvas
 
 ### Backend
-- **Runtime:** Node.js + Express
-- **Database:** MongoDB + Mongoose
-- **Validation:** Joi
-- **Security:** Helmet, CORS, Rate limiting
-- **Authentication:** JWT (future)
+- **Runtime:** Node.js + Express.js
+- **Database:** MongoDB with Mongoose ODM
+- **Security:** Helmet, CORS, Rate Limiting
+- **Validation:** Express Validator
+- **Logging:** Morgan
+- **Compression:** Compression middleware
 
-## Quick Start
+## 🚀 Quick Start
 
-### Backend Setup
+### Prerequisites
+- Node.js 18+ 
+- MongoDB (local or cloud)
+- npm or yarn
+
+### 1. Clone and Setup
 ```bash
+# Clone the repository
+git clone https://github.com/yourusername/worldquestion.git
+cd worldquestion
+
+# Install frontend dependencies
+npm install
+
+# Install backend dependencies
 cd backend
 npm install
-cp env.example .env
-# Edit .env with your MongoDB URI
+cd ..
+```
+
+### 2. Database Setup
+```bash
+# Start MongoDB (if using local)
+mongod
+
+# Or use MongoDB Atlas (cloud)
+# Update backend/.env with your connection string
+```
+
+### 3. Environment Configuration
+```bash
+# Frontend (.env.local)
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
+
+# Backend (backend/.env)
+PORT=5000
+NODE_ENV=development
+MONGODB_URI=mongodb://localhost:27017/worldquestion
+CORS_ORIGIN=http://localhost:3030
+```
+
+### 4. Database Seeding
+```bash
+# Seed the database with sample data
+cd backend
+npm run seed
+cd ..
+```
+
+### 5. Start the Application
+```bash
+# Terminal 1: Start backend (port 5000)
+cd backend
+npm run dev
+
+# Terminal 2: Start frontend (port 3030)
 npm run dev
 ```
 
-### Frontend Setup
-```bash
-npm install
-npm start
-```
+### 6. Access the Application
+- **Frontend:** http://localhost:3030
+- **Backend API:** http://localhost:5000
+- **Health Check:** http://localhost:5000/health
 
-### Production Build
-```bash
-npm run build
-```
-
-## Project Structure
+## 📁 Project Structure
 
 ```
-├── backend/                 # Backend API
-│   ├── models/             # MongoDB models
-│   ├── routes/             # Express routes
-│   ├── server.js           # Main server file
-│   └── package.json
-├── src/
-│   ├── components/         # React components
-│   │   ├── QuestionCard.tsx
-│   │   ├── VoteChart.tsx
-│   │   ├── ShareCard.tsx
-│   │   └── HistoryQuestions.tsx
-│   ├── services/           # API services
-│   │   └── api.ts
-│   ├── types/              # TypeScript types
-│   │   └── index.ts
-│   ├── data/               # Sample data
-│   │   └── questions.ts
-│   ├── App.tsx             # Main app component
-│   ├── index.tsx           # App entry point
-│   └── index.css           # Global styles
-└── README.md
+worldquestion/
+├── app/                    # Next.js App Router
+│   ├── globals.css        # Global styles
+│   ├── layout.tsx         # Root layout
+│   └── page.tsx           # Home page
+├── components/            # React components
+│   ├── VoteChart.tsx      # Beautiful charts
+│   └── ShareCard.tsx      # Share card modal
+├── services/              # API services
+│   └── api.ts            # Backend integration
+├── data/                  # Sample data
+│   └── questions.ts       # Question data
+├── types/                 # TypeScript types
+│   └── index.ts           # Type definitions
+├── backend/               # Express.js Backend
+│   ├── models/           # MongoDB models
+│   │   ├── Question.js   # Question schema
+│   │   ├── Vote.js       # Vote schema
+│   │   └── Comment.js    # Comment schema
+│   ├── routes/           # API routes
+│   │   └── questions.js  # Question endpoints
+│   ├── scripts/          # Database scripts
+│   │   └── seed.js       # Seeding script
+│   ├── server.js         # Express server
+│   ├── package.json      # Backend dependencies
+│   └── env.example       # Environment template
+├── public/                # Static assets
+├── package.json           # Frontend dependencies
+├── tailwind.config.js     # Tailwind configuration
+├── tsconfig.json          # TypeScript configuration
+└── README.md              # This file
 ```
 
-## API Endpoints
+## 🔌 API Endpoints
 
 ### Questions
-- `GET /api/questions/current` - Get current question
-- `GET /api/questions` - Get all questions (paginated)
+- `GET /api/questions/current` - Get current active question
+- `GET /api/questions/history` - Get historical questions
 - `GET /api/questions/:id` - Get question by ID
 - `POST /api/questions/:id/vote` - Vote on a question
-- `POST /api/questions/:id/comments` - Add comment
-- `GET /api/questions/trending/top` - Get trending questions
+- `GET /api/questions/:id/stats` - Get vote statistics
+
+### Comments
+- `GET /api/questions/:id/comments` - Get comments for a question
+- `POST /api/questions/:id/comments` - Add a comment
 
 ### Health
-- `GET /api/health` - Health check
+- `GET /health` - Health check endpoint
 
-## User Flow
+## 🎨 Design Features
 
-1. **Visit Website** → See today's world question
-2. **Vote** → Click Yes or No button
-3. **View Results** → See vote results, charts, trend analysis
-4. **Browse Comments** → Read featured user comments
-5. **Share Vote** → Generate and share voting card
-6. **Explore History** → Browse past questions and results
+### Modern UI/UX
+- **Glassmorphism effects** with backdrop blur
+- **Gradient backgrounds** and beautiful color schemes
+- **Smooth animations** with Framer Motion
+- **Responsive design** that works on all devices
+- **Interactive elements** with hover and tap effects
 
-## Design Features
+### Beautiful Components
+- **Animated vote buttons** with scale effects
+- **Stunning charts** with custom styling
+- **Elegant cards** with shadows and borders
+- **Professional typography** with Inter font
+- **Icon integration** with Lucide React
 
-- **Modern UI:** Clean, professional design focused on content
-- **Responsive Layout:** Perfect adaptation to all device sizes
-- **Smooth Animations:** Elegant transitions and hover effects
-- **Data Visualization:** Intuitive charts for vote results
-- **Social Sharing:** Beautiful share card design
+### User Experience
+- **Intuitive navigation** with smooth transitions
+- **Real-time feedback** for user actions
+- **Accessible design** with proper contrast
+- **Mobile-first approach** for all screen sizes
 
-## Environment Variables
+## 📊 Data Flow
 
-### Backend (.env)
+1. **User visits** → Frontend loads current question from API
+2. **User votes** → Frontend sends vote to backend API
+3. **Backend processes** → Updates MongoDB and returns results
+4. **Results display** → Frontend shows beautiful charts and analysis
+5. **Comments section** → Loads featured comments from API
+6. **Share functionality** → Generates and shares voting card
+7. **History browsing** → Loads historical questions from API
+
+## 🔧 Configuration
+
+### Environment Variables
+
+#### Frontend (.env.local)
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
 ```
+
+#### Backend (backend/.env)
+```env
+# Server Configuration
 PORT=5000
+NODE_ENV=development
+
+# MongoDB Configuration
 MONGODB_URI=mongodb://localhost:27017/worldquestion
-FRONTEND_URL=http://localhost:3000
-JWT_SECRET=your-secret-key
+
+# Security
+JWT_SECRET=your-super-secret-jwt-key
+CORS_ORIGIN=http://localhost:3030
+
+# Rate Limiting
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
 ```
 
-### Frontend
-```
-REACT_APP_API_URL=http://localhost:5000/api
+### Database Models
+
+#### Question Schema
+```javascript
+{
+  text: String,           // Question text
+  date: Date,            // Question date
+  category: String,      // technology, society, etc.
+  tags: [String],        // Question tags
+  isActive: Boolean,     // Current active question
+  aiSummary: String,     // AI-generated analysis
+  totalVotes: Number,    // Total vote count
+  yesVotes: Number,      // Yes votes count
+  noVotes: Number        // No votes count
+}
 ```
 
-## Future Roadmap
+#### Vote Schema
+```javascript
+{
+  questionId: ObjectId,  // Reference to question
+  choice: String,        // 'yes' or 'no'
+  userIp: String,        // Voter IP (for duplicate prevention)
+  timestamp: Date        // Vote timestamp
+}
+```
 
-- [ ] User authentication system
-- [ ] Comment posting functionality
-- [ ] Question recommendation algorithm
-- [ ] Multi-language support
+#### Comment Schema
+```javascript
+{
+  questionId: ObjectId,  // Reference to question
+  content: String,       // Comment text
+  isAnonymous: Boolean,  // Anonymous comment
+  isPinned: Boolean,     // Featured comment
+  userIp: String,        // Commenter IP
+  likes: Number          // Like count
+}
+```
+
+## 🎯 Future Roadmap
+
+### Phase 1 (Current) ✅
+- ✅ Beautiful UI/UX design
+- ✅ Voting functionality
+- ✅ Results visualization
+- ✅ Share cards
+- ✅ Historical questions
+- ✅ Real backend integration
+- ✅ MongoDB database
+- ✅ API endpoints
+- ✅ Database seeding
+
+### Phase 2 (Next)
+- [ ] User authentication
+- [ ] Real-time voting updates (WebSocket)
+- [ ] Comment posting from frontend
+- [ ] User profiles
+- [ ] Question categories
+- [ ] Admin dashboard
+
+### Phase 3 (Future)
 - [ ] Mobile app
-- [ ] Real-time data synchronization
-- [ ] More chart types
-- [ ] Question categorization
-- [ ] Admin panel for question management
-- [ ] Analytics dashboard
+- [ ] Push notifications
+- [ ] Advanced analytics
+- [ ] Multi-language support
+- [ ] AI-powered question generation
+- [ ] Social features
 
-## Contributing
+## 🚀 Deployment
+
+### Frontend (Vercel)
+```bash
+# Build for production
+npm run build
+
+# Deploy to Vercel
+vercel --prod
+```
+
+### Backend (Railway/Heroku)
+```bash
+# Set environment variables
+# Deploy to Railway/Heroku
+# Connect MongoDB Atlas
+```
+
+## 🤝 Contributing
 
 We welcome contributions! Please feel free to submit issues and pull requests.
 
-## License
+### Development Setup
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
 
-MIT License 
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- **Next.js** for the amazing React framework
+- **Express.js** for the robust backend framework
+- **MongoDB** for the flexible database
+- **Tailwind CSS** for the utility-first CSS framework
+- **Framer Motion** for beautiful animations
+- **Chart.js** for data visualization
+- **Lucide** for beautiful icons
+
+---
+
+**Made with ❤️ by the WorldQuestion Team** 

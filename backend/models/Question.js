@@ -1,46 +1,33 @@
 const mongoose = require('mongoose');
 
-const commentSchema = new mongoose.Schema({
-  id: {
-    type: String,
-    required: true,
-    default: () => require('uuid').v4()
-  },
-  text: {
-    type: String,
-    required: true,
-    maxlength: 500
-  },
-  timestamp: {
-    type: Date,
-    default: Date.now
-  },
-  isAnonymous: {
-    type: Boolean,
-    default: true
-  },
-  userId: {
-    type: String,
-    required: false
-  }
-});
-
 const questionSchema = new mongoose.Schema({
-  id: {
-    type: String,
-    required: true,
-    unique: true,
-    default: () => require('uuid').v4()
-  },
   text: {
     type: String,
     required: true,
-    maxlength: 200
+    trim: true,
+    maxlength: 500
   },
   date: {
     type: Date,
     required: true,
     default: Date.now
+  },
+  category: {
+    type: String,
+    enum: ['technology', 'society', 'environment', 'politics', 'science', 'culture'],
+    required: true
+  },
+  tags: [{
+    type: String,
+    trim: true
+  }],
+  isActive: {
+    type: Boolean,
+    default: false
+  },
+  aiSummary: {
+    type: String,
+    default: ''
   },
   totalVotes: {
     type: Number,
@@ -54,25 +41,6 @@ const questionSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  comments: [commentSchema],
-  trendAnalysis: {
-    type: String,
-    required: true,
-    maxlength: 1000
-  },
-  isActive: {
-    type: Boolean,
-    default: true
-  },
-  category: {
-    type: String,
-    enum: ['technology', 'society', 'environment', 'politics', 'science', 'culture'],
-    default: 'society'
-  },
-  tags: [{
-    type: String,
-    maxlength: 20
-  }],
   createdAt: {
     type: Date,
     default: Date.now
@@ -81,13 +49,16 @@ const questionSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
+}, {
+  timestamps: true
 });
 
-questionSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  next();
-});
+// Index for efficient queries
+questionSchema.index({ date: -1 });
+questionSchema.index({ isActive: 1 });
+questionSchema.index({ category: 1 });
 
+// Virtual for calculating percentages
 questionSchema.virtual('yesPercentage').get(function() {
   if (this.totalVotes === 0) return 0;
   return Math.round((this.yesVotes / this.totalVotes) * 100);
@@ -97,5 +68,21 @@ questionSchema.virtual('noPercentage').get(function() {
   if (this.totalVotes === 0) return 0;
   return Math.round((this.noVotes / this.totalVotes) * 100);
 });
+
+// Ensure virtuals are serialized
+questionSchema.set('toJSON', { virtuals: true });
+questionSchema.set('toObject', { virtuals: true });
+
+// Static method to get current active question
+questionSchema.statics.getCurrentQuestion = function() {
+  return this.findOne({ isActive: true }).sort({ date: -1 });
+};
+
+// Static method to get historical questions
+questionSchema.statics.getHistoricalQuestions = function(limit = 10) {
+  return this.find({ isActive: false })
+    .sort({ date: -1 })
+    .limit(limit);
+};
 
 module.exports = mongoose.model('Question', questionSchema); 
