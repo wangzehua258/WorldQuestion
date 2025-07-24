@@ -59,6 +59,10 @@ class ApiService {
     });
   }
 
+  async getUserVote(questionId: string): Promise<ApiResponse<{ hasVoted: boolean; choice: 'yes' | 'no' | null }>> {
+    return this.request<ApiResponse<{ hasVoted: boolean; choice: 'yes' | 'no' | null }>>(`/questions/${questionId}/user-vote`);
+  }
+
   async getQuestionStats(questionId: string): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/questions/${questionId}/stats`);
   }
@@ -117,6 +121,7 @@ export const api = {
   getHistoricalQuestions: (page?: number, limit?: number) => apiService.getHistoricalQuestions(page, limit),
   getQuestionById: (id: string) => apiService.getQuestionById(id),
   voteOnQuestion: (questionId: string, choice: 'yes' | 'no') => apiService.voteOnQuestion(questionId, choice),
+  getUserVote: (questionId: string) => apiService.getUserVote(questionId),
   getQuestionStats: (questionId: string) => apiService.getQuestionStats(questionId),
   
   // Comments

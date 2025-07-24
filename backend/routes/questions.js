@@ -108,6 +108,50 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Get user's vote for a question
+router.get('/:id/user-vote', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userIp = req.ip || req.connection.remoteAddress;
+
+    // Check if question exists
+    const question = await Question.findById(id);
+    if (!question) {
+      return res.status(404).json({
+        success: false,
+        message: 'Question not found'
+      });
+    }
+
+    // Get user's vote
+    const userVote = await Vote.hasUserVoted(id, userIp);
+    
+    if (!userVote) {
+      return res.json({
+        success: true,
+        data: {
+          hasVoted: false,
+          choice: null
+        }
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        hasVoted: true,
+        choice: userVote.choice
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching user vote:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
 // Vote on a question
 router.post('/:id/vote', [
   body('choice').isIn(['yes', 'no']).withMessage('Choice must be either "yes" or "no"')

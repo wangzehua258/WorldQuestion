@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Globe, MessageCircle, TrendingUp, Calendar, Share2, Users, Sparkles, CheckCircle, XCircle, Loader2, Plus, ThumbsUp, Lightbulb } from 'lucide-react';
 import { format } from 'date-fns';
@@ -10,6 +10,7 @@ import VoteChart from '@/components/VoteChart';
 import ShareCard from '@/components/ShareCard';
 import ThemeSelector from '@/components/ThemeSelector';
 import { getCurrentTheme, themes } from './themes';
+import { ShareCardSVG, ThemeKey } from '@/components/ShareCardSVG';
 
 export default function HomePage() {
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
@@ -43,6 +44,7 @@ export default function HomePage() {
   // Theme state
   const [currentThemeKey, setCurrentThemeKey] = useState<string>('watermelon');
   const [currentTheme, setCurrentTheme] = useState(themes['watermelon'].theme);
+  const shareCardRef = useRef<SVGSVGElement>(null);
 
   // Load current question and theme on component mount
   useEffect(() => {
@@ -62,6 +64,27 @@ export default function HomePage() {
       const response = await api.getCurrentQuestion();
       if (response.success && response.data) {
         setCurrentQuestion(response.data);
+        
+        // Check if user has already voted on this question
+        try {
+          const userVoteResponse = await api.getUserVote(response.data.id);
+          if (userVoteResponse.success && userVoteResponse.data) {
+            if (userVoteResponse.data.hasVoted) {
+              setHasVoted(true);
+              setUserVote(userVoteResponse.data.choice);
+              setAlreadyVotedMsg('You have already voted on this question.');
+            } else {
+              setHasVoted(false);
+              setUserVote(null);
+              setAlreadyVotedMsg(null);
+            }
+          }
+        } catch (err) {
+          console.error('Error checking user vote:', err);
+          // If we can't check the vote, assume they haven't voted
+          setHasVoted(false);
+          setUserVote(null);
+        }
       } else {
         setError(response.message || 'No active question found');
       }
@@ -287,6 +310,8 @@ export default function HomePage() {
       </div>
     );
   }
+
+  const themeKey = currentThemeKey as ThemeKey;
 
   return (
     <div className={`min-h-screen ${currentTheme.background}`}>
@@ -591,16 +616,29 @@ export default function HomePage() {
                   {/* Already Voted Message */}
                   {alreadyVotedMsg && (
                     <div className="p-6 bg-yellow-100 border border-yellow-300 rounded-2xl text-center">
-                      <p className="text-yellow-800 font-semibold text-lg">{alreadyVotedMsg}</p>
+                      <p className="text-yellow-800 font-semibold text-lg">
+                        You have already voted on this question.
+                        {userVote && (
+                          <span className="block mt-2 text-base">
+                            You voted: <span className={`font-bold ${userVote === 'yes' ? 'text-green-600' : 'text-red-600'}`}>
+                              {userVote === 'yes' ? 'YES' : 'NO'}
+                            </span>
+                          </span>
+                        )}
+                      </p>
                     </div>
                   )}
 
                   {/* Vote Results */}
                   <div className={`${currentTheme.cards.secondary}`}>
                     <h2 className={`${currentTheme.typography.h2} mb-3 text-center`}>Vote Results</h2>
-                    {userVote && (
+                    {userVote ? (
                       <p className={`${currentTheme.typography.body} text-center mb-6`}>
-                        You voted <span className={`font-bold ${currentTheme.text.primary.replace('text-', 'text-').replace('700', '600')}`}>{userVote === 'yes' ? 'Yes' : 'No'}</span>
+                        You voted <span className={`font-bold ${userVote === 'yes' ? 'text-green-600' : 'text-red-600'}`}>{userVote === 'yes' ? 'YES' : 'NO'}</span>
+                      </p>
+                    ) : (
+                      <p className={`${currentTheme.typography.body} text-center mb-6 text-slate-500`}>
+                        You haven't voted yet
                       </p>
                     )}
                     
@@ -745,7 +783,7 @@ export default function HomePage() {
                   {/* Share Button */}
                   <div className="text-center">
                     <motion.button
-                      onClick={handleShare}
+                      onClick={() => setShowShareCard(true)}
                       className={`${currentTheme.buttons.primary} inline-flex items-center space-x-3`}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
@@ -763,18 +801,103 @@ export default function HomePage() {
 
       {/* Share Card Modal */}
       <AnimatePresence>
-        {showShareCard && currentQuestion && userVote && (
-          <ShareCard
-            shareData={{
-              questionText: currentQuestion.text,
-              userVote: userVote,
-              globalPercentage: userVote === 'yes' 
-                ? Math.round((currentQuestion.yesVotes / (currentQuestion.yesVotes + currentQuestion.noVotes)) * 100)
-                : Math.round((currentQuestion.noVotes / (currentQuestion.yesVotes + currentQuestion.noVotes)) * 100),
-              totalVotes: currentQuestion.yesVotes + currentQuestion.noVotes
-            }}
-            onClose={() => setShowShareCard(false)}
-          />
+        {showShareCard && currentQuestion && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+            onClick={() => setShowShareCard(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-slate-800">Share Your Vote</h3>
+                <button onClick={() => setShowShareCard(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                  <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-full flex justify-center">
+                  <div style={{ width: 'min(90vw, 340px)', height: 'auto' }}>
+                    <ShareCardSVG
+                      ref={shareCardRef}
+                      question={currentQuestion.text}
+                      userChoice={userVote === 'yes' ? 'YES' : userVote === 'no' ? 'NO' : 'NEUTRAL'}
+                      yesRatio={currentQuestion.yesVotes + currentQuestion.noVotes > 0 ? Math.round((currentQuestion.yesVotes / (currentQuestion.yesVotes + currentQuestion.noVotes)) * 100) : 50}
+                      noRatio={currentQuestion.yesVotes + currentQuestion.noVotes > 0 ? Math.round((currentQuestion.noVotes / (currentQuestion.yesVotes + currentQuestion.noVotes)) * 100) : 50}
+                      totalVotes={currentQuestion.yesVotes + currentQuestion.noVotes}
+                      theme={themeKey}
+                      width={340}
+                      height={420}
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col md:flex-row gap-3 mt-6 w-full justify-center items-center">
+                  <button
+                    className="flex items-center justify-center gap-1.5 md:gap-2 w-32 md:w-40 h-10 md:h-12 bg-slate-800 text-white rounded-xl font-medium text-xs hover:bg-slate-900 transition shadow px-2"
+                    onClick={() => {
+                      const svg = shareCardRef.current;
+                      if (!svg) return;
+                      const serializer = new XMLSerializer();
+                      const source = serializer.serializeToString(svg);
+                      const svgBlob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+                      const url = URL.createObjectURL(svgBlob);
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.download = 'worldquestion-share.svg';
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      URL.revokeObjectURL(url);
+                    }}
+                  >
+                    <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 5v14m7-7H5"/></svg>
+                    <span className="hidden sm:inline">Download SVG</span>
+                    <span className="sm:hidden">Download</span>
+                  </button>
+                  <button
+                    className="flex items-center justify-center gap-1.5 md:gap-2 w-32 md:w-40 h-10 md:h-12 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium text-xs transition shadow px-2"
+                    onClick={() => {
+                      const text = `I voted ${userVote === 'yes' ? 'YES' : userVote === 'no' ? 'NO' : 'YES'} on today's question: \"${currentQuestion.text}\"\n\nJoin the conversation at worldquestion.com`;
+                      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`,'_blank');
+                    }}
+                  >
+                    <svg className="w-5 h-5 md:w-6 md:h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>
+                    <span className="hidden sm:inline">Share on X</span>
+                    <span className="sm:hidden">X</span>
+                  </button>
+                  <button
+                    className="flex items-center justify-center gap-1.5 md:gap-2 w-32 md:w-40 h-10 md:h-12 bg-blue-700 hover:bg-blue-800 text-white rounded-xl font-medium text-xs transition shadow px-2"
+                    onClick={() => {
+                      const url = 'https://worldquestion.com';
+                      window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,'_blank');
+                    }}
+                  >
+                    <svg className="w-5 h-5 md:w-6 md:h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                    <span className="hidden sm:inline">Share on LinkedIn</span>
+                    <span className="sm:hidden">LinkedIn</span>
+                  </button>
+                  <button
+                    className="flex items-center justify-center gap-1.5 md:gap-2 w-32 md:w-40 h-10 md:h-12 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-medium text-xs transition shadow px-2"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`https://worldquestion.com`);
+                      alert('Link copied to clipboard!');
+                    }}
+                  >
+                    <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+                    <span className="hidden sm:inline">Copy Link</span>
+                    <span className="sm:hidden">Copy</span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
 
