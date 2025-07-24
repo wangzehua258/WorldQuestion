@@ -8,6 +8,7 @@ const morgan = require('morgan');
 require('dotenv').config();
 
 const questionsRouter = require('./routes/questions');
+const proposedQuestionsRouter = require('./routes/proposed-questions');
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -76,6 +77,7 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api/questions', questionsRouter);
+app.use('/api/proposed-questions', proposedQuestionsRouter);
 
 // 404 handler
 app.use('*', (req, res) => {

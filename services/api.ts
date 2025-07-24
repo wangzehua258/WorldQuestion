@@ -1,4 +1,4 @@
-import { Question, Comment, ApiResponse, QuestionsResponse } from '@/types';
+import { Question, Comment, ApiResponse, QuestionsResponse, ProposedQuestion, ProposedQuestionsResponse } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
@@ -79,6 +79,28 @@ class ApiService {
     });
   }
 
+  // Proposed Questions API
+  async getProposedQuestions(limit: number = 20): Promise<ApiResponse<ProposedQuestion[]>> {
+    return this.request<ApiResponse<ProposedQuestion[]>>(`/proposed-questions?limit=${limit}`);
+  }
+
+  async getTopProposedQuestions(limit: number = 10): Promise<ApiResponse<ProposedQuestion[]>> {
+    return this.request<ApiResponse<ProposedQuestion[]>>(`/proposed-questions/top?limit=${limit}`);
+  }
+
+  async submitProposedQuestion(text: string, category: string, tags: string[] = [], submittedBy: string = 'Anonymous'): Promise<ApiResponse<ProposedQuestion>> {
+    return this.request<ApiResponse<ProposedQuestion>>(`/proposed-questions`, {
+      method: 'POST',
+      body: JSON.stringify({ text, category, tags, submittedBy }),
+    });
+  }
+
+  async voteOnProposedQuestion(proposalId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/proposed-questions/${proposalId}/vote`, {
+      method: 'POST',
+    });
+  }
+
   // Health check
   async healthCheck(): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/health');
@@ -101,6 +123,12 @@ export const api = {
   getComments: (questionId: string, limit?: number, pinned?: boolean) => apiService.getComments(questionId, limit, pinned),
   getRandomComments: (questionId: string, limit?: number) => apiService.getRandomComments(questionId, limit),
   addComment: (questionId: string, content: string, isAnonymous?: boolean) => apiService.addComment(questionId, content, isAnonymous),
+  
+  // Proposed Questions
+  getProposedQuestions: (limit?: number) => apiService.getProposedQuestions(limit),
+  getTopProposedQuestions: (limit?: number) => apiService.getTopProposedQuestions(limit),
+  submitProposedQuestion: (text: string, category: string, tags?: string[], submittedBy?: string) => apiService.submitProposedQuestion(text, category, tags, submittedBy),
+  voteOnProposedQuestion: (proposalId: string) => apiService.voteOnProposedQuestion(proposalId),
   
   // Health
   healthCheck: () => apiService.healthCheck(),

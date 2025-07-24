@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Globe, MessageCircle, TrendingUp, Calendar, Share2, Users, Sparkles, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Globe, MessageCircle, TrendingUp, Calendar, Share2, Users, Sparkles, CheckCircle, XCircle, Loader2, Plus, ThumbsUp, Lightbulb } from 'lucide-react';
 import { format } from 'date-fns';
-import { Question, ShareCard as ShareCardType } from '@/types';
+import { Question, ShareCard as ShareCardType, ProposedQuestion } from '@/types';
 import { api } from '@/services/api';
 import VoteChart from '@/components/VoteChart';
 import ShareCard from '@/components/ShareCard';
@@ -12,21 +12,32 @@ import ShareCard from '@/components/ShareCard';
 export default function HomePage() {
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [historicalQuestions, setHistoricalQuestions] = useState<Question[]>([]);
+  const [proposedQuestions, setProposedQuestions] = useState<ProposedQuestion[]>([]);
   const [hasVoted, setHasVoted] = useState(false);
   const [userVote, setUserVote] = useState<'yes' | 'no' | null>(null);
   const [showShareCard, setShowShareCard] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showNextRound, setShowNextRound] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [alreadyVotedMsg, setAlreadyVotedMsg] = useState<string | null>(null);
   const [commentText, setCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
+  
+  // Proposed question form state
+  const [proposedQuestionText, setProposedQuestionText] = useState('');
+  const [proposedQuestionCategory, setProposedQuestionCategory] = useState<'technology' | 'society' | 'environment' | 'politics' | 'science' | 'culture'>('technology');
+  const [proposedQuestionTags, setProposedQuestionTags] = useState('');
+  const [submittedBy, setSubmittedBy] = useState('');
+  const [submittingProposal, setSubmittingProposal] = useState(false);
+  const [showProposalForm, setShowProposalForm] = useState(false);
 
   // Load current question on component mount
   useEffect(() => {
     loadCurrentQuestion();
     loadHistoricalQuestions();
+    loadProposedQuestions();
   }, []);
 
   const loadCurrentQuestion = async () => {
@@ -59,6 +70,17 @@ export default function HomePage() {
     }
   };
 
+  const loadProposedQuestions = async () => {
+    try {
+      const response = await api.getProposedQuestions(20);
+      if (response.success && response.data) {
+        setProposedQuestions(response.data);
+      }
+    } catch (err) {
+      console.error('Error loading proposed questions:', err);
+    }
+  };
+
   const handleVote = async (vote: 'yes' | 'no') => {
     if (!currentQuestion) return;
 
@@ -84,24 +106,6 @@ export default function HomePage() {
     }
   };
 
-  const handleShare = () => {
-    if (!currentQuestion || !userVote) return;
-
-    const total = currentQuestion.yesVotes + currentQuestion.noVotes;
-    const percentage = userVote === 'yes' 
-      ? Math.round((currentQuestion.yesVotes / total) * 100)
-      : Math.round((currentQuestion.noVotes / total) * 100);
-
-    const shareData: ShareCardType = {
-      questionText: currentQuestion.text,
-      userVote: userVote,
-      globalPercentage: percentage,
-      totalVotes: total
-    };
-
-    setShowShareCard(true);
-  };
-
   const handleAddComment = async () => {
     if (!currentQuestion || !commentText.trim()) return;
 
@@ -121,6 +125,71 @@ export default function HomePage() {
     } finally {
       setSubmittingComment(false);
     }
+  };
+
+  const handleSubmitProposedQuestion = async () => {
+    if (!proposedQuestionText.trim()) return;
+
+    try {
+      setSubmittingProposal(true);
+      const tags = proposedQuestionTags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+      
+      const response = await api.submitProposedQuestion(
+        proposedQuestionText.trim(),
+        proposedQuestionCategory,
+        tags,
+        submittedBy || 'Anonymous'
+      );
+      
+      if (response.success) {
+        setProposedQuestionText('');
+        setProposedQuestionTags('');
+        setSubmittedBy('');
+        setShowProposalForm(false);
+        // Reload proposed questions
+        await loadProposedQuestions();
+      } else {
+        setError(response.message || 'Failed to submit question');
+      }
+    } catch (err) {
+      console.error('Error submitting proposed question:', err);
+      setError('Failed to submit question. Please try again.');
+    } finally {
+      setSubmittingProposal(false);
+    }
+  };
+
+  const handleVoteOnProposal = async (proposalId: string) => {
+    try {
+      const response = await api.voteOnProposedQuestion(proposalId);
+      if (response.success) {
+        // Reload proposed questions to get updated vote counts
+        await loadProposedQuestions();
+      } else {
+        setError(response.message || 'Failed to vote on proposal');
+      }
+    } catch (err) {
+      console.error('Error voting on proposal:', err);
+      setError('Failed to vote on proposal. Please try again.');
+    }
+  };
+
+  const handleShare = () => {
+    if (!currentQuestion || !userVote) return;
+
+    const total = currentQuestion.yesVotes + currentQuestion.noVotes;
+    const percentage = userVote === 'yes' 
+      ? Math.round((currentQuestion.yesVotes / total) * 100)
+      : Math.round((currentQuestion.noVotes / total) * 100);
+
+    const shareData: ShareCardType = {
+      questionText: currentQuestion.text,
+      userVote: userVote,
+      globalPercentage: percentage,
+      totalVotes: total
+    };
+
+    setShowShareCard(true);
   };
 
   if (loading) {
@@ -180,10 +249,32 @@ export default function HomePage() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setShowHistory(!showHistory)}
-                className="px-4 py-2 text-sm font-semibold text-purple-600 hover:text-purple-800 hover:bg-purple-100 rounded-full transition-all duration-200"
+                onClick={() => {
+                  setShowHistory(!showHistory);
+                  setShowNextRound(false);
+                }}
+                className={`px-4 py-2 text-sm font-semibold rounded-full transition-all duration-200 ${
+                  showHistory 
+                    ? 'text-purple-800 bg-purple-100' 
+                    : 'text-purple-600 hover:text-purple-800 hover:bg-purple-100'
+                }`}
               >
                 History
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  setShowNextRound(!showNextRound);
+                  setShowHistory(false);
+                }}
+                className={`px-4 py-2 text-sm font-semibold rounded-full transition-all duration-200 ${
+                  showNextRound 
+                    ? 'text-purple-800 bg-purple-100' 
+                    : 'text-purple-600 hover:text-purple-800 hover:bg-purple-100'
+                }`}
+              >
+                Next Round
               </motion.button>
             </div>
           </div>
@@ -193,7 +284,7 @@ export default function HomePage() {
       {/* Main Content */}
       <main className="flex-1 w-full flex flex-col items-center justify-center py-12 px-2">
         <AnimatePresence mode="wait">
-          {!showHistory ? (
+          {!showHistory && !showNextRound ? (
             <motion.div
               key="current"
               initial={{ opacity: 0, y: 20 }}
@@ -385,7 +476,7 @@ export default function HomePage() {
               </motion.div>
               {/* End Question Card */}
             </motion.div>
-          ) : (
+          ) : showHistory ? (
             <motion.div
               key="history"
               initial={{ opacity: 0, y: 20 }}
@@ -457,6 +548,203 @@ export default function HomePage() {
                   <p className="text-gray-500 text-lg">No historical questions available yet.</p>
                 </div>
               )}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="next-round"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5 }}
+              className="w-full max-w-4xl"
+            >
+              <div className="text-center mb-12">
+                <h2 className="text-3xl font-bold text-slate-800 mb-4">Next Round Questions</h2>
+                <p className="text-slate-600 text-lg">Submit and vote on questions for tomorrow</p>
+              </div>
+
+              {/* Submit New Question Form */}
+              <div className="bg-white rounded-3xl shadow-2xl p-8 mb-8 border border-purple-100">
+                <div className="flex items-center space-x-3 mb-6">
+                  <div className="p-2 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-xl">
+                    <Lightbulb className="text-white" size={24} />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-700">Submit Your Question</h3>
+                </div>
+
+                {!showProposalForm ? (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowProposalForm(true)}
+                    className="btn-primary inline-flex items-center space-x-2"
+                  >
+                    <Plus size={20} />
+                    <span>Propose a Question</span>
+                  </motion.button>
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="space-y-4"
+                  >
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">
+                        Your Question *
+                      </label>
+                      <textarea
+                        value={proposedQuestionText}
+                        onChange={(e) => setProposedQuestionText(e.target.value)}
+                        placeholder="What world-changing question should we ask tomorrow?"
+                        className="w-full p-4 border border-purple-200 rounded-xl resize-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                        rows={3}
+                        maxLength={500}
+                      />
+                      <div className="text-sm text-slate-500 mt-1">
+                        {proposedQuestionText.length}/500 characters
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">
+                        Category *
+                      </label>
+                      <select
+                        value={proposedQuestionCategory}
+                        onChange={(e) => setProposedQuestionCategory(e.target.value as any)}
+                        className="w-full p-3 border border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                      >
+                        <option value="technology">Technology</option>
+                        <option value="society">Society</option>
+                        <option value="environment">Environment</option>
+                        <option value="politics">Politics</option>
+                        <option value="science">Science</option>
+                        <option value="culture">Culture</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">
+                        Tags (optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={proposedQuestionTags}
+                        onChange={(e) => setProposedQuestionTags(e.target.value)}
+                        placeholder="AI, ethics, future (comma separated)"
+                        className="w-full p-3 border border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">
+                        Your Name (optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={submittedBy}
+                        onChange={(e) => setSubmittedBy(e.target.value)}
+                        placeholder="Anonymous"
+                        className="w-full p-3 border border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                      />
+                    </div>
+
+                    <div className="flex space-x-4 pt-4">
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={handleSubmitProposedQuestion}
+                        disabled={!proposedQuestionText.trim() || submittingProposal}
+                        className="btn-primary flex items-center space-x-2"
+                      >
+                        {submittingProposal ? (
+                          <Loader2 className="animate-spin" size={20} />
+                        ) : (
+                          <Plus size={20} />
+                        )}
+                        <span>{submittingProposal ? 'Submitting...' : 'Submit Question'}</span>
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setShowProposalForm(false)}
+                        className="px-6 py-3 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-full font-semibold transition"
+                      >
+                        Cancel
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Proposed Questions List */}
+              <div className="space-y-6">
+                <h3 className="text-2xl font-bold text-slate-700 text-center mb-8">
+                  Top Proposed Questions
+                </h3>
+                
+                {proposedQuestions.length > 0 ? (
+                  proposedQuestions.map((proposal, index) => (
+                    <motion.div
+                      key={proposal.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="bg-white rounded-2xl shadow-lg p-6 border border-purple-100"
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex-1">
+                          <h4 className="text-lg font-semibold text-slate-800 mb-2">
+                            {proposal.text}
+                          </h4>
+                          <div className="flex items-center space-x-4 text-sm text-slate-500">
+                            <span className="capitalize bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
+                              {proposal.category}
+                            </span>
+                            <span>by {proposal.submittedBy}</span>
+                            <span>{format(new Date(proposal.submittedAt), 'MMM d, yyyy')}</span>
+                          </div>
+                          {proposal.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-3">
+                              {proposal.tags.map((tag, tagIndex) => (
+                                <span
+                                  key={tagIndex}
+                                  className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-purple-600">
+                              {proposal.votes}
+                            </div>
+                            <div className="text-xs text-slate-500">votes</div>
+                          </div>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => handleVoteOnProposal(proposal.id)}
+                            className="bg-green-400 hover:bg-green-500 text-white p-3 rounded-full shadow-lg transition"
+                          >
+                            <ThumbsUp size={20} />
+                          </motion.button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="text-slate-400 mb-4">
+                      <Lightbulb size={48} className="mx-auto" />
+                    </div>
+                    <p className="text-slate-500 text-lg">No proposed questions yet. Be the first to submit one!</p>
+                  </div>
+                )}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

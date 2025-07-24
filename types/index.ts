@@ -13,6 +13,19 @@ export interface Question {
   updatedAt: string;
 }
 
+export interface ProposedQuestion {
+  id: string;
+  text: string;
+  category: 'technology' | 'society' | 'environment' | 'politics' | 'science' | 'culture';
+  tags: string[];
+  submittedBy: string;
+  votes: number;
+  status: 'active' | 'selected' | 'rejected';
+  submittedAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Comment {
   id: string;
   content: string;
@@ -49,4 +62,8 @@ export interface QuestionsResponse {
   totalPages: number;
   currentPage: number;
   total: number;
+}
+
+export interface ProposedQuestionsResponse {
+  data: ProposedQuestion[];
 } 
