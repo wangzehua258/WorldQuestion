@@ -10,9 +10,18 @@ router.get('/', async (req, res) => {
     const { limit = 20 } = req.query;
     const proposals = await ProposedQuestion.getActiveProposals(parseInt(limit));
 
+    // Transform the data to include both _id and id
+    const transformedProposals = proposals.map(proposal => {
+      const proposalObj = proposal.toObject();
+      return {
+        ...proposalObj,
+        id: proposalObj._id
+      };
+    });
+
     res.json({
       success: true,
-      data: proposals
+      data: transformedProposals
     });
   } catch (error) {
     console.error('Error fetching proposed questions:', error);
@@ -29,9 +38,18 @@ router.get('/top', async (req, res) => {
     const { limit = 10 } = req.query;
     const topProposals = await ProposedQuestion.getTopProposals(parseInt(limit));
 
+    // Transform the data to include both _id and id
+    const transformedProposals = topProposals.map(proposal => {
+      const proposalObj = proposal.toObject();
+      return {
+        ...proposalObj,
+        id: proposalObj._id
+      };
+    });
+
     res.json({
       success: true,
-      data: topProposals
+      data: transformedProposals
     });
   } catch (error) {
     console.error('Error fetching top proposed questions:', error);
@@ -87,10 +105,16 @@ router.post('/', [
 
     await proposedQuestion.save();
 
+    // Transform the data to include both _id and id
+    const transformedQuestion = {
+      ...proposedQuestion.toObject(),
+      id: proposedQuestion._id
+    };
+
     res.json({
       success: true,
       message: 'Question proposed successfully',
-      data: proposedQuestion
+      data: transformedQuestion
     });
   } catch (error) {
     console.error('Error submitting proposed question:', error);
@@ -158,9 +182,15 @@ router.get('/:id', async (req, res) => {
       });
     }
 
+    // Transform the data to include both _id and id
+    const transformedProposal = {
+      ...proposal.toObject(),
+      id: proposal._id
+    };
+
     res.json({
       success: true,
-      data: proposal
+      data: transformedProposal
     });
   } catch (error) {
     console.error('Error fetching proposed question:', error);

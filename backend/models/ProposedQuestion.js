@@ -69,6 +69,8 @@ proposedQuestionSchema.statics.hasUserVoted = function(proposalId, userIp) {
   return this.findOne({
     _id: proposalId,
     'voters.userIp': userIp
+  }).then(result => {
+    return result !== null;
   });
 };
 

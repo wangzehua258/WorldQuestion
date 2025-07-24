@@ -32,6 +32,7 @@ export default function HomePage() {
   const [submittedBy, setSubmittedBy] = useState('');
   const [submittingProposal, setSubmittingProposal] = useState(false);
   const [showProposalForm, setShowProposalForm] = useState(false);
+  const [proposalVoteMsg, setProposalVoteMsg] = useState<string | null>(null);
 
   // Load current question on component mount
   useEffect(() => {
@@ -44,11 +45,9 @@ export default function HomePage() {
     try {
       setLoading(true);
       const response = await api.getCurrentQuestion();
-      console.log('loadCurrentQuestion response:', response); // Debug log
       if (response.success && response.data) {
         setCurrentQuestion(response.data);
       } else {
-        console.log('Setting error:', response.message); // Debug log
         setError(response.message || 'No active question found');
       }
     } catch (err) {
@@ -164,6 +163,12 @@ export default function HomePage() {
       const response = await api.voteOnProposedQuestion(proposalId);
       if (response.success) {
         // Reload proposed questions to get updated vote counts
+        await loadProposedQuestions();
+      } else if (response.message === 'You have already voted on this question') {
+        // Show message directly on the page instead of as error
+        setProposalVoteMsg('You have already voted on this question');
+        setTimeout(() => setProposalVoteMsg(null), 3000); // Clear message after 3 seconds
+        // Optionally reload to show latest vote counts
         await loadProposedQuestions();
       } else {
         setError(response.message || 'Failed to vote on proposal');
@@ -682,6 +687,14 @@ export default function HomePage() {
                 <h3 className="text-2xl font-bold text-slate-700 text-center mb-8">
                   Top Proposed Questions
                 </h3>
+                
+                {proposalVoteMsg && (
+                  <div className="text-center mb-4">
+                    <span className="inline-block bg-yellow-100 text-yellow-800 font-semibold px-4 py-2 rounded-full">
+                      {proposalVoteMsg}
+                    </span>
+                  </div>
+                )}
                 
                 {proposedQuestions.length > 0 ? (
                   proposedQuestions.map((proposal, index) => (
