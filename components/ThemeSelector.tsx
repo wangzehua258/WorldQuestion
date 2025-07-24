@@ -98,29 +98,31 @@ export default function ThemeSelector() {
             {/* Theme Options */}
             <div className="space-y-2">
               <p className="text-sm font-medium text-slate-700 mb-3">Choose Theme</p>
-              {Object.entries(themes).map(([key, theme]) => (
-                <motion.button
-                  key={key}
-                  onClick={() => handleThemeChange(key as ThemeKey)}
-                  className={`w-full p-3 rounded-xl text-left transition-all duration-200 ${
-                    currentTheme === key
-                      ? 'bg-slate-100 border-2 border-slate-300'
-                      : 'bg-white border border-slate-200 hover:bg-slate-50'
-                  }`}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-slate-800">{theme.name}</p>
-                      <p className="text-xs text-slate-500">{theme.description}</p>
+              <div className="max-h-64 overflow-y-auto scrollbar-thin">
+                {Object.entries(themes).map(([key, theme]) => (
+                  <motion.button
+                    key={key}
+                    onClick={() => handleThemeChange(key as ThemeKey)}
+                    className={`w-full p-3 rounded-xl text-left transition-all duration-200 ${
+                      currentTheme === key
+                        ? 'bg-slate-100 border-2 border-slate-300'
+                        : 'bg-white border border-slate-200 hover:bg-slate-50'
+                    }`}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-slate-800">{theme.name}</p>
+                        <p className="text-xs text-slate-500">{theme.description}</p>
+                      </div>
+                      {currentTheme === key && (
+                        <Check className="w-4 h-4 text-green-600" />
+                      )}
                     </div>
-                    {currentTheme === key && (
-                      <Check className="w-4 h-4 text-green-600" />
-                    )}
-                  </div>
-                </motion.button>
-              ))}
+                  </motion.button>
+                ))}
+              </div>
             </div>
 
             {/* Theme Preview */}
