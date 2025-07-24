@@ -197,6 +197,11 @@ export default function HomePage() {
     setShowShareCard(true);
   };
 
+  const handleHomeClick = () => {
+    setShowHistory(false);
+    setShowNextRound(false);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-blue-50 to-emerald-50">
@@ -245,10 +250,15 @@ export default function HomePage() {
               <div className="p-2 bg-gradient-to-r from-purple-400 to-blue-400 rounded-2xl shadow">
                 <Globe className="text-white" size={32} />
               </div>
-              <div>
+              <motion.div 
+                onClick={handleHomeClick}
+                className="cursor-pointer hover:opacity-80 transition-opacity"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
                 <h1 className="text-2xl font-extrabold text-purple-700 tracking-tight">WorldQuestion</h1>
                 <p className="text-sm text-slate-500">Daily World Questions</p>
-              </div>
+              </motion.div>
             </div>
             <div className="flex items-center space-x-2">
               <motion.button
