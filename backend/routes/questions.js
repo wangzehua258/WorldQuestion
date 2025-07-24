@@ -334,4 +334,52 @@ router.get('/:id/comments/random', async (req, res) => {
   }
 });
 
+// Admin endpoint to manually trigger weekly rotation
+router.post('/rotate-weekly', async (req, res) => {
+  try {
+    console.log('🔄 Manual weekly rotation triggered');
+    
+    const result = await Question.rotateWeeklyQuestion();
+    
+    if (result.success) {
+      res.json({
+        success: true,
+        message: 'Weekly rotation completed successfully',
+        data: {
+          archivedQuestion: result.archivedQuestion ? {
+            id: result.archivedQuestion._id,
+            text: result.archivedQuestion.text,
+            finalVotes: {
+              yes: result.archivedQuestion.yesVotes,
+              no: result.archivedQuestion.noVotes
+            }
+          } : null,
+          newQuestion: {
+            id: result.newQuestion._id,
+            text: result.newQuestion.text,
+            category: result.newQuestion.category
+          },
+          selectedProposal: result.selectedProposal ? {
+            id: result.selectedProposal._id,
+            text: result.selectedProposal.text,
+            submittedBy: result.selectedProposal.submittedBy,
+            votes: result.selectedProposal.votes
+          } : null
+        }
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Weekly rotation failed'
+      });
+    }
+  } catch (error) {
+    console.error('Error in manual weekly rotation:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error during rotation'
+    });
+  }
+});
+
 module.exports = router; 

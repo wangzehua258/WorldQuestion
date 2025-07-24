@@ -81,4 +81,73 @@ questionSchema.statics.getHistoricalQuestions = function(limit = 10) {
     .limit(limit);
 };
 
+// Static method to archive current question and make a proposed question active
+questionSchema.statics.rotateWeeklyQuestion = async function() {
+  try {
+    // 1. Archive current active question
+    const currentActive = await this.findOne({ isActive: true });
+    if (currentActive) {
+      currentActive.isActive = false;
+      currentActive.archivedAt = new Date();
+      await currentActive.save();
+    }
+
+    // 2. Get the top voted proposed question
+    const ProposedQuestion = require('./ProposedQuestion');
+    const topProposal = await ProposedQuestion.findOne({ 
+      status: 'active' 
+    }).sort({ votes: -1 });
+
+    if (topProposal) {
+      // 3. Create new active question from the top proposal
+      const newQuestion = new this({
+        text: topProposal.text,
+        category: topProposal.category,
+        tags: topProposal.tags,
+        isActive: true,
+        createdAt: new Date(),
+        yesVotes: 0,
+        noVotes: 0,
+        comments: []
+      });
+      await newQuestion.save();
+
+      // 4. Update the proposed question status
+      topProposal.status = 'selected';
+      topProposal.selectedAt = new Date();
+      await topProposal.save();
+
+      return {
+        success: true,
+        archivedQuestion: currentActive,
+        newQuestion: newQuestion,
+        selectedProposal: topProposal
+      };
+    } else {
+      // If no proposals, create a default question
+      const defaultQuestion = new this({
+        text: "Should we continue to explore and innovate in technology?",
+        category: "technology",
+        tags: ["innovation", "future", "technology"],
+        isActive: true,
+        createdAt: new Date(),
+        yesVotes: 0,
+        noVotes: 0,
+        comments: []
+      });
+      await defaultQuestion.save();
+
+      return {
+        success: true,
+        archivedQuestion: currentActive,
+        newQuestion: defaultQuestion,
+        selectedProposal: null
+      };
+    }
+  } catch (error) {
+    console.error('Error rotating weekly question:', error);
+    throw error;
+  }
+};
+
 module.exports = mongoose.model('Question', questionSchema); 

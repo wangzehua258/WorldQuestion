@@ -272,6 +272,7 @@ export default function HomePage() {
                 <Lightbulb size={24} />
                 <span>Next Round</span>
               </motion.button>
+              
             </div>
           </div>
         </div>

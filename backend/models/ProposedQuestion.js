@@ -44,6 +44,12 @@ const proposedQuestionSchema = new mongoose.Schema({
     enum: ['active', 'selected', 'rejected'],
     default: 'active'
   },
+  selectedAt: {
+    type: Date
+  },
+  rejectedAt: {
+    type: Date
+  },
   submittedAt: {
     type: Date,
     default: Date.now
