@@ -1,23 +1,21 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
-import html2canvas from 'html2canvas';
-import { Download, Share2, X, Globe, Users } from 'lucide-react';
+import React, { useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { X, Download, Share2 } from 'lucide-react';
 import { ShareCard as ShareCardType } from '@/types';
+import html2canvas from 'html2canvas';
 
 interface ShareCardProps {
   shareData: ShareCardType;
   onClose: () => void;
 }
 
-const ShareCard: React.FC<ShareCardProps> = ({ shareData, onClose }) => {
+export default function ShareCard({ shareData, onClose }: ShareCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
 
   const handleDownload = async () => {
     if (cardRef.current) {
-      setIsGenerating(true);
       try {
         const canvas = await html2canvas(cardRef.current, {
           backgroundColor: '#ffffff',
@@ -26,33 +24,28 @@ const ShareCard: React.FC<ShareCardProps> = ({ shareData, onClose }) => {
         });
         
         const link = document.createElement('a');
-        link.download = 'worldquestion-share.png';
+        link.download = `worldquestion-share-${Date.now()}.png`;
         link.href = canvas.toDataURL();
         link.click();
       } catch (error) {
         console.error('Error generating image:', error);
-      } finally {
-        setIsGenerating(false);
+        alert('Failed to generate image. Please try again.');
       }
     }
   };
 
-  const handleShare = async () => {
+  const handleShare = () => {
+    const text = `I voted ${shareData.userVote === 'yes' ? 'YES' : 'NO'} on today's question!\n\n${shareData.globalPercentage}% of people agree. What do you think?\n\nJoin the conversation at worldquestion.com`;
+    
     if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'WorldQuestion',
-          text: `I voted on WorldQuestion! "${shareData.questionText}" - I voted ${shareData.userVote === 'yes' ? 'Yes' : 'No'}, and ${shareData.globalPercentage}% of people agree with me!`,
-          url: window.location.href,
-        });
-      } catch (error) {
-        console.error('Error sharing:', error);
-      }
+      navigator.share({
+        title: 'WorldQuestion - Daily Voting',
+        text: text,
+        url: 'https://worldquestion.com'
+      });
     } else {
-      // Fallback: copy to clipboard
-      const text = `I voted on WorldQuestion! "${shareData.questionText}" - I voted ${shareData.userVote === 'yes' ? 'Yes' : 'No'}, and ${shareData.globalPercentage}% of people agree with me!`;
       navigator.clipboard.writeText(text);
-      alert('Share content copied to clipboard!');
+      alert('Text copied to clipboard!');
     }
   };
 
@@ -62,82 +55,105 @@ const ShareCard: React.FC<ShareCardProps> = ({ shareData, onClose }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+        className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
         onClick={onClose}
       >
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl"
+          className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex justify-between items-start mb-8">
-            <div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">Share Your Vote</h3>
-              <p className="text-gray-600">Create a beautiful share card</p>
-            </div>
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-slate-800">Share Your Vote</h3>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-full hover:bg-gray-100"
+              className="p-2 hover:bg-slate-100 rounded-full transition-colors"
             >
-              <X size={24} />
+              <X className="w-5 h-5 text-slate-500" />
             </button>
           </div>
 
           {/* Share Card Preview */}
-          <motion.div 
+          <div 
             ref={cardRef}
-            className="bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 rounded-2xl p-8 text-white mb-8 shadow-xl relative overflow-hidden"
-            initial={{ scale: 0.95 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.1 }}
+            className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-2xl p-6 mb-6 border border-blue-100"
           >
-            {/* Background Pattern */}
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-4 right-4">
-                <Globe size={60} />
+            {/* Logo and Title */}
+            <div className="text-center mb-4">
+              <div className="inline-flex items-center space-x-2 bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 mb-3">
+                <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+                <span className="font-bold text-slate-800">WorldQuestion</span>
               </div>
-              <div className="absolute bottom-4 left-4">
-                <Users size={40} />
+              <p className="text-sm text-slate-600">Daily World Questions</p>
+            </div>
+
+            {/* Question */}
+            <div className="mb-4">
+              <h2 className="text-lg font-bold text-slate-800 text-center leading-tight">
+                "{shareData.questionText}"
+              </h2>
+            </div>
+
+            {/* Vote Results */}
+            <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-slate-600">Global Results</span>
+                <span className="text-sm font-bold text-slate-800">{shareData.totalVotes} votes</span>
+              </div>
+              
+              {/* Progress Bar */}
+              <div className="w-full bg-slate-200 rounded-full h-3 mb-2">
+                <div 
+                  className="bg-gradient-to-r from-green-400 to-green-500 h-3 rounded-full transition-all duration-500"
+                  style={{ width: `${shareData.globalPercentage}%` }}
+                ></div>
+              </div>
+              
+              <div className="flex justify-between text-sm">
+                <span className="text-green-600 font-semibold">YES {shareData.globalPercentage}%</span>
+                <span className="text-red-600 font-semibold">NO {100 - shareData.globalPercentage}%</span>
               </div>
             </div>
-            
-            <div className="relative z-10 text-center">
-              <div className="text-sm opacity-90 mb-3 font-medium tracking-wide">WorldQuestion</div>
-              <div className="text-lg font-semibold mb-6 leading-relaxed">{shareData.questionText}</div>
-              <div className="text-4xl font-bold mb-3">
-                I voted {shareData.userVote === 'yes' ? 'Yes' : 'No'}!
-              </div>
-              <div className="text-xl mb-3 font-medium">
-                {shareData.globalPercentage}% of people agree with me
-              </div>
-              <div className="text-sm opacity-80 font-medium">
-                {shareData.totalVotes.toLocaleString()} total votes
+
+            {/* User's Vote */}
+            <div className="text-center">
+              <div className={`inline-flex items-center space-x-2 px-4 py-2 rounded-full ${
+                shareData.userVote === 'yes' 
+                  ? 'bg-green-100 text-green-700 border border-green-200' 
+                  : 'bg-red-100 text-red-700 border border-red-200'
+              }`}>
+                <span className="font-bold">I voted {shareData.userVote.toUpperCase()}</span>
               </div>
             </div>
-          </motion.div>
+
+            {/* Footer */}
+            <div className="text-center mt-4">
+              <p className="text-xs text-slate-500">worldquestion.com</p>
+            </div>
+          </div>
 
           {/* Action Buttons */}
-          <div className="flex space-x-4">
+          <div className="flex space-x-3">
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
               onClick={handleDownload}
-              disabled={isGenerating}
-              className="flex-1 flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50"
-            >
-              <Download size={20} />
-              <span>{isGenerating ? 'Generating...' : 'Download'}</span>
-            </motion.button>
-            <motion.button
+              className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold py-3 px-4 rounded-2xl transition-all duration-200 flex items-center justify-center space-x-2"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={handleShare}
-              className="flex-1 flex items-center justify-center space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-4 px-6 rounded-xl transition-all duration-200"
             >
-              <Share2 size={20} />
+              <Download className="w-5 h-5" />
+              <span>Download</span>
+            </motion.button>
+            
+            <motion.button
+              onClick={handleShare}
+              className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 px-4 rounded-2xl transition-all duration-200 flex items-center justify-center space-x-2"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Share2 className="w-5 h-5" />
               <span>Share</span>
             </motion.button>
           </div>
@@ -145,6 +161,4 @@ const ShareCard: React.FC<ShareCardProps> = ({ shareData, onClose }) => {
       </motion.div>
     </AnimatePresence>
   );
-};
-
-export default ShareCard; 
+} 
