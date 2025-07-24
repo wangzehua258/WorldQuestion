@@ -6,7 +6,6 @@ export interface Question {
   yesVotes: number;
   noVotes: number;
   comments: Comment[];
-  aiSummary: string;
   isActive: boolean;
   category: 'technology' | 'society' | 'environment' | 'politics' | 'science' | 'culture';
   tags: string[];

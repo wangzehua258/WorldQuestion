@@ -18,12 +18,12 @@ router.get('/current', async (req, res) => {
       });
     }
 
-    // Get comments for the question
-    const comments = await Comment.getPinnedComments(question._id, 5);
+    // Get 3 random comments for the question
+    const randomComments = await Comment.getRandomComments(question._id, 3);
 
     const questionData = {
       ...question.toJSON(),
-      comments: comments
+      comments: randomComments
     };
 
     res.json({
@@ -297,6 +297,36 @@ router.get('/:id/comments', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching comments:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+// Get random comments for a question
+router.get('/:id/comments/random', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { limit = 3 } = req.query;
+
+    // Check if question exists
+    const question = await Question.findById(id);
+    if (!question) {
+      return res.status(404).json({
+        success: false,
+        message: 'Question not found'
+      });
+    }
+
+    const comments = await Comment.getRandomComments(id, parseInt(limit));
+
+    res.json({
+      success: true,
+      data: comments
+    });
+  } catch (error) {
+    console.error('Error fetching random comments:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'

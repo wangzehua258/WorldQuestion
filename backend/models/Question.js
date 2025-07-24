@@ -25,10 +25,6 @@ const questionSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  aiSummary: {
-    type: String,
-    default: ''
-  },
   totalVotes: {
     type: Number,
     default: 0

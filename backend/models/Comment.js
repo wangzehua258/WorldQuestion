@@ -59,6 +59,15 @@ commentSchema.statics.getPinnedComments = function(questionId, limit = 5) {
   .limit(limit);
 };
 
+// Static method to get random comments for a question
+commentSchema.statics.getRandomComments = function(questionId, limit = 3) {
+  return this.aggregate([
+    { $match: { questionId: new mongoose.Types.ObjectId(questionId) } },
+    { $sample: { size: limit } },
+    { $sort: { timestamp: -1 } }
+  ]);
+};
+
 // Static method to get recent comments for a question
 commentSchema.statics.getRecentComments = function(questionId, limit = 10) {
   return this.find({ questionId })

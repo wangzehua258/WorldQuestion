@@ -20,6 +20,8 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [alreadyVotedMsg, setAlreadyVotedMsg] = useState<string | null>(null);
+  const [commentText, setCommentText] = useState('');
+  const [submittingComment, setSubmittingComment] = useState(false);
 
   // Load current question on component mount
   useEffect(() => {
@@ -98,6 +100,27 @@ export default function HomePage() {
     };
 
     setShowShareCard(true);
+  };
+
+  const handleAddComment = async () => {
+    if (!currentQuestion || !commentText.trim()) return;
+
+    try {
+      setSubmittingComment(true);
+      const response = await api.addComment(currentQuestion.id, commentText.trim());
+      if (response.success) {
+        setCommentText('');
+        // Reload current question to get updated comments
+        await loadCurrentQuestion();
+      } else {
+        setError(response.message || 'Failed to add comment');
+      }
+    } catch (err) {
+      console.error('Error adding comment:', err);
+      setError('Failed to add comment. Please try again.');
+    } finally {
+      setSubmittingComment(false);
+    }
   };
 
   if (loading) {
@@ -242,18 +265,63 @@ export default function HomePage() {
                       </p>
                       <VoteChart yesVotes={currentQuestion.yesVotes} noVotes={currentQuestion.noVotes} />
                     </div>
-                    {/* AI Summary */}
-                    {currentQuestion.aiSummary && (
-                      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl shadow p-6 mb-6">
-                        <div className="flex items-center space-x-3 mb-4">
-                          <div className="p-2 bg-gradient-to-r from-blue-400 to-purple-400 rounded-xl">
-                            <Sparkles className="text-white" size={24} />
-                          </div>
-                          <h3 className="text-xl font-bold text-purple-700">AI Analysis</h3>
+                    {/* User Comments Section */}
+                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl shadow p-6 mb-6">
+                      <div className="flex items-center space-x-3 mb-4">
+                        <div className="p-2 bg-gradient-to-r from-blue-400 to-purple-400 rounded-xl">
+                          <MessageCircle className="text-white" size={24} />
                         </div>
-                        <p className="text-slate-700 leading-relaxed text-base">{currentQuestion.aiSummary}</p>
+                        <h3 className="text-xl font-bold text-purple-700">Share Your Thoughts</h3>
                       </div>
-                    )}
+                      
+                      {/* Comment Form */}
+                      <div className="mb-6">
+                        <textarea
+                          value={commentText}
+                          onChange={(e) => setCommentText(e.target.value)}
+                          placeholder="What are your thoughts on this question? Share your perspective..."
+                          className="w-full p-4 border border-purple-200 rounded-xl resize-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                          rows={3}
+                          maxLength={500}
+                        />
+                        <div className="flex justify-between items-center mt-2">
+                          <span className="text-sm text-slate-500">
+                            {commentText.length}/500 characters
+                          </span>
+                          <button
+                            onClick={handleAddComment}
+                            disabled={!commentText.trim() || submittingComment}
+                            className="bg-purple-500 hover:bg-purple-600 disabled:bg-slate-300 text-white font-semibold py-2 px-4 rounded-full transition disabled:cursor-not-allowed"
+                          >
+                            {submittingComment ? 'Posting...' : 'Post Comment'}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Random Comments Display */}
+                      {currentQuestion.comments && currentQuestion.comments.length > 0 && (
+                        <div>
+                          <h4 className="text-lg font-semibold text-slate-700 mb-4">What Others Are Saying</h4>
+                          <div className="space-y-4">
+                            {currentQuestion.comments.map((comment, index) => (
+                              <motion.div
+                                key={comment.id || index}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.1 }}
+                                className="bg-white rounded-xl p-4 border border-purple-100 shadow-sm"
+                              >
+                                <p className="text-slate-700 mb-2 text-sm leading-relaxed">{comment.content}</p>
+                                <div className="text-xs text-slate-400 font-medium">
+                                  {format(new Date(comment.timestamp), 'MMM d, yyyy • h:mm a')}
+                                </div>
+                              </motion.div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
                     {/* Comments Section */}
                     {currentQuestion.comments && currentQuestion.comments.length > 0 && (
                       <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl shadow p-6 mb-6">
@@ -262,7 +330,7 @@ export default function HomePage() {
                             <div className="p-2 bg-gradient-to-r from-purple-400 to-pink-400 rounded-xl">
                               <MessageCircle className="text-white" size={24} />
                             </div>
-                            <h3 className="text-xl font-bold text-purple-700">Featured Comments</h3>
+                            <h3 className="text-xl font-bold text-purple-700">All Comments</h3>
                           </div>
                           <motion.button
                             whileHover={{ scale: 1.05 }}
@@ -270,7 +338,7 @@ export default function HomePage() {
                             onClick={() => setShowComments(!showComments)}
                             className="text-purple-600 hover:text-purple-800 text-sm font-semibold transition-colors"
                           >
-                            {showComments ? 'Hide' : 'Show'} Comments
+                            {showComments ? 'Hide' : 'Show'} All Comments
                           </motion.button>
                         </div>
                         <AnimatePresence>
@@ -281,9 +349,9 @@ export default function HomePage() {
                               exit={{ opacity: 0, height: 0 }}
                               className="space-y-4"
                             >
-                              {currentQuestion.comments.filter(c => c.isPinned).map((comment, index) => (
+                              {currentQuestion.comments.map((comment, index) => (
                                 <motion.div
-                                  key={comment.id}
+                                  key={comment.id || index}
                                   initial={{ opacity: 0, x: -20 }}
                                   animate={{ opacity: 1, x: 0 }}
                                   transition={{ delay: index * 0.1 }}

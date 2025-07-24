@@ -68,6 +68,10 @@ class ApiService {
     return this.request<ApiResponse<Comment[]>>(`/questions/${questionId}/comments?limit=${limit}&pinned=${pinned}`);
   }
 
+  async getRandomComments(questionId: string, limit: number = 3): Promise<ApiResponse<Comment[]>> {
+    return this.request<ApiResponse<Comment[]>>(`/questions/${questionId}/comments/random?limit=${limit}`);
+  }
+
   async addComment(questionId: string, content: string, isAnonymous: boolean = true): Promise<ApiResponse<Comment>> {
     return this.request<ApiResponse<Comment>>(`/questions/${questionId}/comments`, {
       method: 'POST',
@@ -95,6 +99,7 @@ export const api = {
   
   // Comments
   getComments: (questionId: string, limit?: number, pinned?: boolean) => apiService.getComments(questionId, limit, pinned),
+  getRandomComments: (questionId: string, limit?: number) => apiService.getRandomComments(questionId, limit),
   addComment: (questionId: string, content: string, isAnonymous?: boolean) => apiService.addComment(questionId, content, isAnonymous),
   
   // Health

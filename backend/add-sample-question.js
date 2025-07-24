@@ -20,7 +20,6 @@ const sampleQuestion = {
   category: "technology",
   tags: ["AI", "regulation", "ethics", "government"],
   isActive: true,
-  aiSummary: "This question explores the balance between innovation and safety in AI development, considering the need for oversight while avoiding stifling progress.",
   totalVotes: 0,
   yesVotes: 0,
   noVotes: 0
