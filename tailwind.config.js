@@ -173,8 +173,17 @@ module.exports = {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Poppins', 'system-ui', 'sans-serif'],
+        display: ['var(--font-poppins)', 'Poppins', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
+        fancy: ['var(--font-playfair)', 'Playfair Display', 'Georgia', 'serif'],
+        modern: ['var(--font-poppins)', 'Poppins', 'Inter', 'system-ui', 'sans-serif'],
+        // 新增字体选项
+        handwriting: ['var(--font-dancing)', 'Dancing Script', 'cursive'],
+        geometric: ['var(--font-montserrat)', 'Montserrat', 'system-ui', 'sans-serif'],
+        classic: ['var(--font-lora)', 'Lora', 'Georgia', 'serif'],
+        futuristic: ['var(--font-orbitron)', 'Orbitron', 'monospace'],
+        romantic: ['var(--font-great-vibes)', 'Great Vibes', 'cursive'],
+        bold: ['var(--font-poppins)', 'Poppins', 'system-ui', 'sans-serif'],
       },
       fontSize: {
         'xs': ['0.75rem', { lineHeight: '1rem' }],

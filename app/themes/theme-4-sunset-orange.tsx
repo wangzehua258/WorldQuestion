@@ -2,7 +2,7 @@
 export const sunsetOrangeTheme = {
   // Background gradients
   background: 'bg-gradient-to-br from-sunset-50 via-orange-50 to-yellow-50',
-  headerBackground: 'bg-white/80 backdrop-blur-md',
+  headerBackground: 'bg-white/90 backdrop-blur-md',
   
   // Primary colors
   primary: {
@@ -28,33 +28,36 @@ export const sunsetOrangeTheme = {
   
   // Button styles
   buttons: {
-    primary: 'bg-sunset-500 hover:bg-sunset-600 text-white font-semibold py-3 px-6 rounded-full shadow-lg transition-all duration-200 hover:shadow-xl',
-    success: 'bg-lavender-400 hover:bg-lavender-500 text-white font-semibold py-3 px-6 rounded-full shadow-lg transition-all duration-200 hover:shadow-xl',
-    danger: 'bg-red-400 hover:bg-red-500 text-white font-semibold py-3 px-6 rounded-full shadow-lg transition-all duration-200 hover:shadow-xl',
-    secondary: 'bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 px-6 rounded-full transition-all duration-200',
+    primary: 'bg-sunset-500 hover:bg-sunset-600 text-white font-semibold py-4 px-8 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl text-lg',
+    success: 'bg-lavender-400 hover:bg-lavender-500 text-white font-semibold py-4 px-8 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl text-lg',
+    danger: 'bg-red-400 hover:bg-red-500 text-white font-semibold py-4 px-8 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl text-lg',
+    secondary: 'bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 px-6 rounded-2xl transition-all duration-200 text-base',
   },
   
   // Card styles
   cards: {
-    main: 'bg-white rounded-3xl shadow-2xl p-8 md:p-12 border border-sunset-100',
-    secondary: 'bg-gradient-to-r from-sunset-50 to-orange-50 rounded-2xl shadow p-6',
-    comment: 'bg-white rounded-xl p-4 border border-sunset-100 shadow-sm',
+    main: 'bg-white rounded-3xl shadow-2xl p-10 md:p-16 border border-sunset-100',
+    secondary: 'bg-gradient-to-r from-sunset-50 to-orange-50 rounded-3xl shadow-lg p-8',
+    comment: 'bg-white rounded-2xl p-6 border border-sunset-100 shadow-sm',
   },
   
   // Header styles
   header: {
-    logo: 'p-2 bg-gradient-to-r from-sunset-400 to-orange-400 rounded-2xl shadow',
-    title: 'text-2xl font-extrabold text-sunset-700 tracking-tight',
-    subtitle: 'text-sm text-slate-500',
+    logo: 'p-3 bg-gradient-to-r from-sunset-400 to-orange-400 rounded-2xl shadow-lg',
+    title: 'text-3xl font-extrabold text-sunset-700 tracking-tight',
+    subtitle: 'text-base text-slate-500 font-medium',
   },
   
   // Typography
   typography: {
-    h1: 'text-3xl md:text-4xl font-extrabold text-slate-800 leading-tight',
-    h2: 'text-2xl font-bold text-slate-700',
-    h3: 'text-xl font-bold text-sunset-700',
-    body: 'text-slate-700 leading-relaxed',
-    caption: 'text-sm text-slate-500',
+    h1: 'text-2xl md:text-3xl lg:text-4xl font-extrabold text-sunset-600 leading-snug tracking-tight font-classic',
+    h2: 'text-2xl md:text-3xl font-bold text-slate-700 leading-tight font-modern',
+    h3: 'text-xl font-bold text-sunset-700 leading-tight font-modern',
+    h4: 'text-lg font-semibold text-slate-700 leading-tight font-modern',
+    body: 'text-base text-slate-700 leading-relaxed font-sans',
+    bodySmall: 'text-sm text-slate-600 leading-relaxed font-sans',
+    caption: 'text-sm text-slate-500 font-medium font-sans',
+    button: 'text-base font-semibold font-modern',
   },
   
   // Gradients
