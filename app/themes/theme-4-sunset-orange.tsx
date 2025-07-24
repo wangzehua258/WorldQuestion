@@ -29,8 +29,8 @@ export const sunsetOrangeTheme = {
   // Button styles
   buttons: {
     primary: 'bg-sunset-500 hover:bg-sunset-600 text-white font-semibold py-4 px-8 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl text-lg',
-    success: 'bg-lavender-400 hover:bg-lavender-500 text-white font-semibold py-4 px-8 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl text-lg',
-    danger: 'bg-red-400 hover:bg-red-500 text-white font-semibold py-4 px-8 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl text-lg',
+    success: 'bg-warmYellow-400 hover:bg-warmYellow-500 text-white font-semibold py-4 px-8 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl text-lg',
+    danger: 'bg-accentBlue-400 hover:bg-accentBlue-500 text-white font-semibold py-4 px-8 rounded-2xl shadow-lg transition-all duration-200 hover:shadow-xl text-lg',
     secondary: 'bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-3 px-6 rounded-2xl transition-all duration-200 text-base',
   },
   
