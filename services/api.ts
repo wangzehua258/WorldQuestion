@@ -5,6 +5,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/a
 class ApiService {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
+    console.log('API request URL:', url); // Debug log
     
     const config: RequestInit = {
       headers: {
@@ -16,12 +17,21 @@ class ApiService {
 
     try {
       const response = await fetch(url, config);
+      console.log('API response status:', response.status); // Debug log
       
+      const data = await response.json();
+      console.log('API response data:', data); // Debug log
+      
+      // For 400 responses, return the data (which contains the error message)
+      if (response.status === 400) {
+        return data;
+      }
+      
+      // For other error statuses, throw an error
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      const data = await response.json();
       return data;
     } catch (error) {
       console.error('API request failed:', error);

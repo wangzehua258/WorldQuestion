@@ -19,6 +19,7 @@ export default function HomePage() {
   const [showHistory, setShowHistory] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [alreadyVotedMsg, setAlreadyVotedMsg] = useState<string | null>(null);
 
   // Load current question on component mount
   useEffect(() => {
@@ -30,10 +31,12 @@ export default function HomePage() {
     try {
       setLoading(true);
       const response = await api.getCurrentQuestion();
+      console.log('loadCurrentQuestion response:', response); // Debug log
       if (response.success && response.data) {
         setCurrentQuestion(response.data);
       } else {
-        setError('No active question found');
+        console.log('Setting error:', response.message); // Debug log
+        setError(response.message || 'No active question found');
       }
     } catch (err) {
       console.error('Error loading current question:', err);
@@ -62,8 +65,13 @@ export default function HomePage() {
       if (response.success) {
         setUserVote(vote);
         setHasVoted(true);
-        
+        setAlreadyVotedMsg(null);
         // Reload current question to get updated vote counts
+        await loadCurrentQuestion();
+      } else if (response.message === 'You have already voted on this question') {
+        setHasVoted(true);
+        setAlreadyVotedMsg('You have already voted on this question.');
+        // Optionally, reload current question to show latest results
         await loadCurrentQuestion();
       } else {
         setError(response.message || 'Failed to record vote');
@@ -219,6 +227,13 @@ export default function HomePage() {
                   </div>
                 ) : (
                   <div className="space-y-10">
+                    {alreadyVotedMsg && (
+                      <div className="text-center mb-2">
+                        <span className="inline-block bg-yellow-100 text-yellow-800 font-semibold px-4 py-2 rounded-full">
+                          {alreadyVotedMsg}
+                        </span>
+                      </div>
+                    )}
                     {/* Results Section */}
                     <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl shadow p-6 mb-6">
                       <h2 className="text-2xl font-bold text-slate-700 mb-2 text-center">Vote Results</h2>
