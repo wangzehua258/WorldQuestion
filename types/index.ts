@@ -11,6 +11,7 @@ export interface Question {
   tags: string[];
   createdAt: string;
   updatedAt: string;
+  aiSummary?: string;
 }
 
 export interface ProposedQuestion {

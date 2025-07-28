@@ -122,7 +122,7 @@ const VoteChart: React.FC<VoteChartProps> = ({ yesVotes, noVotes, showBar = fals
           color: '#64748b',
           font: {
             size: 14,
-            weight: '600',
+            weight: 'bold' as const,
           },
         },
       },
