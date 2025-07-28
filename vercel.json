@@ -11,8 +11,5 @@
       "src": "/(.*)",
       "dest": "/"
     }
-  ],
-  "env": {
-    "NEXT_PUBLIC_API_URL": "@worldquestion-api-url"
-  }
+  ]
 } 
