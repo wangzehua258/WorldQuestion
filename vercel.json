@@ -14,9 +14,5 @@
   ],
   "env": {
     "NEXT_PUBLIC_API_URL": "@worldquestion-api-url"
-  },
-  "domains": [
-    "thinkornot.com",
-    "www.thinkornot.com"
-  ]
+  }
 } 
