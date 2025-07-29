@@ -335,7 +335,10 @@ export default function HomePage() {
             
             <div className="flex items-center space-x-6">
               <motion.button
-                onClick={() => setShowHistory(!showHistory)}
+                onClick={() => {
+                  setShowHistory(true);
+                  setShowNextRound(false);
+                }}
                 className={`${currentTheme.buttons.secondary} flex items-center space-x-3`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -345,7 +348,10 @@ export default function HomePage() {
               </motion.button>
               
               <motion.button
-                onClick={() => setShowNextRound(!showNextRound)}
+                onClick={() => {
+                  setShowNextRound(true);
+                  setShowHistory(false);
+                }}
                 className={`${currentTheme.buttons.secondary} flex items-center space-x-3`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
