@@ -49,9 +49,62 @@ export default function HomePage() {
 
   // Load current question and theme on component mount
   useEffect(() => {
-    loadCurrentQuestion();
-    loadHistoricalQuestions();
-    loadProposedQuestions();
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        
+        // Make all API calls in parallel
+        const [currentQuestionResponse, historicalResponse, proposedResponse] = await Promise.all([
+          api.getCurrentQuestion(),
+          api.getHistoricalQuestions(1, 10),
+          api.getProposedQuestions(20)
+        ]);
+
+        // Handle current question
+        if (currentQuestionResponse.success && currentQuestionResponse.data) {
+          setCurrentQuestion(currentQuestionResponse.data);
+          
+          // Check user vote for the current question
+          try {
+            const userVoteResponse = await api.getUserVote(currentQuestionResponse.data.id);
+            if (userVoteResponse.success && userVoteResponse.data) {
+              if (userVoteResponse.data.hasVoted) {
+                setHasVoted(true);
+                setUserVote(userVoteResponse.data.choice);
+                setAlreadyVotedMsg('You have already voted on this question.');
+              } else {
+                setHasVoted(false);
+                setUserVote(null);
+                setAlreadyVotedMsg(null);
+              }
+            }
+          } catch (err) {
+            console.error('Error checking user vote:', err);
+            setHasVoted(false);
+            setUserVote(null);
+          }
+        } else {
+          setError(currentQuestionResponse.message || 'No active question found');
+        }
+
+        // Handle historical questions
+        if (historicalResponse.success && historicalResponse.data) {
+          setHistoricalQuestions(historicalResponse.data.questions || []);
+        }
+
+        // Handle proposed questions
+        if (proposedResponse.success && proposedResponse.data) {
+          setProposedQuestions(proposedResponse.data);
+        }
+      } catch (err) {
+        console.error('Error loading data:', err);
+        setError('Failed to load data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
     
     // Load current theme
     const themeKey = getCurrentTheme();
