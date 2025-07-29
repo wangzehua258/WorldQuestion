@@ -129,13 +129,21 @@ export default function HomePage() {
         setUserVote(vote);
         setHasVoted(true);
         setAlreadyVotedMsg(null);
-        // Reload current question to get updated vote counts
-        await loadCurrentQuestion();
+        
+        // Update vote counts directly without reloading
+        if (currentQuestion) {
+          const updatedQuestion = { ...currentQuestion };
+          if (vote === 'yes') {
+            updatedQuestion.yesVotes += 1;
+          } else {
+            updatedQuestion.noVotes += 1;
+          }
+          updatedQuestion.totalVotes += 1;
+          setCurrentQuestion(updatedQuestion);
+        }
       } else if (response.message === 'You have already voted on this question') {
         setHasVoted(true);
         setAlreadyVotedMsg('You have already voted on this question.');
-        // Optionally, reload current question to show latest results
-        await loadCurrentQuestion();
       } else {
         setError(response.message || 'Failed to record vote');
       }
