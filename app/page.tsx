@@ -27,6 +27,7 @@ export default function HomePage() {
   const [alreadyVotedMsg, setAlreadyVotedMsg] = useState<string | null>(null);
   const [commentText, setCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [submittingVote, setSubmittingVote] = useState(false);
   
   // Proposed question form state
   const [proposedQuestionText, setProposedQuestionText] = useState('');
@@ -119,9 +120,10 @@ export default function HomePage() {
   };
 
   const handleVote = async (vote: 'yes' | 'no') => {
-    if (!currentQuestion) return;
+    if (!currentQuestion || submittingVote) return;
 
     try {
+      setSubmittingVote(true);
       const response = await api.voteOnQuestion(currentQuestion.id, vote);
       if (response.success) {
         setUserVote(vote);
@@ -140,6 +142,8 @@ export default function HomePage() {
     } catch (err) {
       console.error('Error voting:', err);
       setError('Failed to record vote');
+    } finally {
+      setSubmittingVote(false);
     }
   };
 
@@ -599,21 +603,31 @@ export default function HomePage() {
                   <div className="flex space-x-8">
                     <motion.button
                       onClick={() => handleVote('yes')}
-                      className={`${currentTheme.buttons.success} flex items-center space-x-3`}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                      disabled={submittingVote}
+                      className={`${currentTheme.buttons.success} flex items-center space-x-3 ${submittingVote ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      whileHover={submittingVote ? {} : { scale: 1.05 }}
+                      whileTap={submittingVote ? {} : { scale: 0.95 }}
                     >
-                      <CheckCircle size={28} />
-                      <span>Yes</span>
+                      {submittingVote ? (
+                        <Loader2 className="w-7 h-7 animate-spin" />
+                      ) : (
+                        <CheckCircle size={28} />
+                      )}
+                      <span>{submittingVote ? 'Voting...' : 'Yes'}</span>
                     </motion.button>
                     <motion.button
                       onClick={() => handleVote('no')}
-                      className={`${currentTheme.buttons.danger} flex items-center space-x-3`}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                      disabled={submittingVote}
+                      className={`${currentTheme.buttons.danger} flex items-center space-x-3 ${submittingVote ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      whileHover={submittingVote ? {} : { scale: 1.05 }}
+                      whileTap={submittingVote ? {} : { scale: 0.95 }}
                     >
-                      <XCircle size={28} />
-                      <span>No</span>
+                      {submittingVote ? (
+                        <Loader2 className="w-7 h-7 animate-spin" />
+                      ) : (
+                        <XCircle size={28} />
+                      )}
+                      <span>{submittingVote ? 'Voting...' : 'No'}</span>
                     </motion.button>
                   </div>
                 </div>
